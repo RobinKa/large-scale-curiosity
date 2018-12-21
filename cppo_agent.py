@@ -2,9 +2,9 @@ import time
 
 import numpy as np
 import tensorflow as tf
-from baselines.common import explained_variance
-from baselines.common.mpi_moments import mpi_moments
-from baselines.common.running_mean_std import RunningMeanStd
+from stable_baselines.common import explained_variance
+from stable_baselines.common.mpi_moments import mpi_moments
+from stable_baselines.common.running_mean_std import RunningMeanStd
 from mpi4py import MPI
 
 from mpi_utils import MpiAdamOptimizer

@@ -1,5 +1,5 @@
 import tensorflow as tf
-from baselines.common.distributions import make_pdtype
+from stable_baselines.common.distributions import make_proba_dist_type as make_pdtype
 
 from utils import getsess, small_convnet, activ, fc, flatten_two_dims, unflatten_first_dim
 

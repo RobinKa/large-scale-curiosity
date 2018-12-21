@@ -5,7 +5,7 @@ from functools import partial
 
 import numpy as np
 import tensorflow as tf
-from baselines.common.tf_util import normc_initializer
+from stable_baselines.common.tf_util import normc_initializer
 from mpi4py import MPI
 
 
