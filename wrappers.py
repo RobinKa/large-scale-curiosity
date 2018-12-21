@@ -352,4 +352,15 @@ def make_robo_hockey(frame_stack=True):
     env = AddRandomStateToInfo(env)
     return env
 
+def make_virtualbox(frame_stack=True):
+    from stable_baselines.common.atari_wrappers import FrameStack
+    import curiousvmenvs as cvm
+
+    env = cvm.make_virtualbox()
+    #env = robo.DiscretizeActionWrapper(env, 2)
+    #env = robo.MultiDiscreteToUsual(env)
+    #env = OneChannel(env)
+    if frame_stack:
+        env = FrameStack(env, 4)
+    env = AddRandomStateToInfo(env)
     return env

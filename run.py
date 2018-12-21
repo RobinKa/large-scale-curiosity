@@ -20,7 +20,8 @@ from cppo_agent import PpoOptimizer
 from dynamics import Dynamics, UNet
 from utils import random_agent_ob_mean_std
 from wrappers import MontezumaInfoWrapper, make_mario_env, make_robo_pong, make_robo_hockey, \
-    make_multi_pong, AddRandomStateToInfo, MaxAndSkipEnv, ProcessFrame84, ExtraTimeLimit
+    make_multi_pong, AddRandomStateToInfo, MaxAndSkipEnv, ProcessFrame84, ExtraTimeLimit, \
+    make_virtualbox
 
 
 def start_experiment(**args):
@@ -139,6 +140,8 @@ def make_env_all_params(rank, add_monitor, args):
             env = make_robo_pong()
         elif args["env"] == "hockey":
             env = make_robo_hockey()
+    elif args["env_kind"] == "virtualbox":
+        env = make_virtualbox(False)
 
     if add_monitor:
         env = Monitor(env, osp.join(logger.get_dir(), '%.2i' % rank))
