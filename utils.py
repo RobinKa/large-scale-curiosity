@@ -61,7 +61,7 @@ def setup_mpi_gpus():
     """
     Set CUDA_VISIBLE_DEVICES using MPI.
     """
-    available_gpus = guess_available_gpus()
+    available_gpus = guess_available_gpus(1)
 
     node_id = platform.node()
     nodes_ordered_by_rank = MPI.COMM_WORLD.allgather(node_id)
@@ -94,6 +94,7 @@ def random_agent_ob_mean_std(env, nsteps=10000):
             if done:
                 ob = env.reset()
             obs.append(np.asarray(ob))
+        env.close()
         mean = np.mean(obs, 0).astype(np.float32)
         std = np.std(obs, 0).mean().astype(np.float32)
     else:

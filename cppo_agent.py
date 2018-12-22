@@ -214,6 +214,7 @@ class PpoOptimizer(object):
     def step(self):
         self.rollout.collect_rollout()
         update_info = self.update()
+        print("Update info:", update_info)
         return {'update': update_info}
 
     def get_var_values(self):

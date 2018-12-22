@@ -129,11 +129,11 @@ class ShmemVecEnv(VecEnv):
 
         self.parent_pipes = []
         self.procs = []
-        for env_fn, obs_buf in zip(env_fns, self.obs_bufs):
+        for i, (env_fn, obs_buf) in enumerate(zip(env_fns, self.obs_bufs)):
             wrapped_fn = CloudpickleWrapper(env_fn)
             parent_pipe, child_pipe = Pipe()
             proc = Process(target=_subproc_worker,
-                           args=(child_pipe, parent_pipe, wrapped_fn, obs_buf, self.obs_shapes))
+                           args=(child_pipe, parent_pipe, wrapped_fn, obs_buf, self.obs_shapes, i))
             proc.daemon = True
             self.procs.append(proc)
             self.parent_pipes.append(parent_pipe)
@@ -183,7 +183,7 @@ class ShmemVecEnv(VecEnv):
         return tuple(obs) if len(obs) > 1 else obs[0]
 
 
-def _subproc_worker(pipe, parent_pipe, env_fn_wrapper, obs_buf, obs_shape):
+def _subproc_worker(pipe, parent_pipe, env_fn_wrapper, obs_buf, obs_shape, process_index):
     """
     Control a single environment instance using IPC and
     shared memory.
@@ -201,6 +201,7 @@ def _subproc_worker(pipe, parent_pipe, env_fn_wrapper, obs_buf, obs_shape):
             np.copyto(dst_np, o)
 
     env = env_fn_wrapper.x()
+    env.unwrapped.machine_name = "Xubuntu %d" % (process_index + 1)
     parent_pipe.close()
     try:
         while True:

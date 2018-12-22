@@ -353,13 +353,43 @@ def make_robo_hockey(frame_stack=True):
     return env
 
 def make_virtualbox(frame_stack=True):
+    print("Make virtualbox in func")
     from stable_baselines.common.atari_wrappers import FrameStack
     import curiousvmenvs as cvm
 
+    class MultiDiscreteToUsual(gym.ActionWrapper):
+        def __init__(self, env):
+            gym.ActionWrapper.__init__(self, env)
+
+            self._inp_act_size = self.env.action_space.nvec
+            self.action_space = gym.spaces.Discrete(np.prod(self._inp_act_size))
+
+        def action(self, a):
+            vec = np.zeros(dtype=np.int8, shape=self._inp_act_size.shape)
+            for i, n in enumerate(self._inp_act_size):
+                vec[i] = a % n
+                a /= n
+            return vec
+
+    class DiscretizeActionWrapper(gym.ActionWrapper):
+        def __init__(self, env=None, nsamples=11):
+            super().__init__(env)
+            assert isinstance(env.action_space, gym.spaces.Box)
+            self._dist_to_cont = []
+            for low, high in zip(env.action_space.low, env.action_space.high):
+                self._dist_to_cont.append(np.linspace(low, high, nsamples))
+            temp = [nsamples for _ in self._dist_to_cont]
+            self.action_space = gym.spaces.MultiDiscrete(temp)
+
+        def action(self, action):
+            assert len(action) == len(self._dist_to_cont)
+            return np.array([m[a] for a, m in zip(action, self._dist_to_cont)], dtype=np.float32)
+
+
     env = cvm.make_virtualbox()
-    #env = robo.DiscretizeActionWrapper(env, 2)
-    #env = robo.MultiDiscreteToUsual(env)
-    #env = OneChannel(env)
+    env = DiscretizeActionWrapper(env, nsamples=11)
+    env = MultiDiscreteToUsual(env)
+    env = OneChannel(env)
     if frame_stack:
         env = FrameStack(env, 4)
     env = AddRandomStateToInfo(env)

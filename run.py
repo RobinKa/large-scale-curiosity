@@ -25,11 +25,15 @@ from wrappers import MontezumaInfoWrapper, make_mario_env, make_robo_pong, make_
 
 
 def start_experiment(**args):
+    print("Starting experiment")
     make_env = partial(make_env_all_params, add_monitor=True, args=args)
 
+    print("Making trainer")
     trainer = Trainer(make_env=make_env,
                       num_timesteps=args['num_timesteps'], hps=args,
                       envs_per_process=args['envs_per_process'])
+
+    print("Getting experiment environment")
     log, tf_sess = get_experiment_environment(**args)
     with log, tf_sess:
         logdir = logger.get_dir()
@@ -43,8 +47,11 @@ class Trainer(object):
         self.hps = hps
         self.envs_per_process = envs_per_process
         self.num_timesteps = num_timesteps
+
+        print("Set env vars")
         self._set_env_vars()
 
+        print("Creating cnn policy")
         self.policy = CnnPolicy(
             scope='pol',
             ob_space=self.ob_space,
@@ -71,6 +78,7 @@ class Trainer(object):
                                       predict_from_pixels=hps['dyn_from_pixels'],
                                       feat_dim=512)
 
+        print("Creating ppo agent")
         self.agent = PpoOptimizer(
             scope='ppo',
             ob_space=self.ob_space,
@@ -98,13 +106,20 @@ class Trainer(object):
         self.agent.to_report['dyn_loss'] = tf.reduce_mean(self.dynamics.loss)
         self.agent.total_loss += self.agent.to_report['dyn_loss']
         self.agent.to_report['feat_var'] = tf.reduce_mean(tf.nn.moments(self.feature_extractor.features, [0, 1])[1])
+        print("Done init trainer")
 
     def _set_env_vars(self):
+        print("Making env")
         env = self.make_env(0, add_monitor=False)
+        print("Done make env")
         self.ob_space, self.ac_space = env.observation_space, env.action_space
-        self.ob_mean, self.ob_std = random_agent_ob_mean_std(env)
+        print("Got obs and action space")
+        self.ob_mean, self.ob_std = random_agent_ob_mean_std(env, 1000)
+        print("Got observations")
         del env
+        print("Deleted env, making partial funcs")
         self.envs = [functools.partial(self.make_env, i) for i in range(self.envs_per_process)]
+        print("Envs:", self.envs)
 
     def train(self):
         self.agent.start_interaction(self.envs, nlump=self.hps['nlumps'], dynamics=self.dynamics)
@@ -141,10 +156,13 @@ def make_env_all_params(rank, add_monitor, args):
         elif args["env"] == "hockey":
             env = make_robo_hockey()
     elif args["env_kind"] == "virtualbox":
-        env = make_virtualbox(False)
+        print("Make virtualbox")
+        env = make_virtualbox()
 
     if add_monitor:
-        env = Monitor(env, osp.join(logger.get_dir(), '%.2i' % rank))
+        logger_dir = "log" if logger.get_dir() is None else logger.get_dir()
+        print("Adding monitor at dir", logger_dir)
+        env = Monitor(env, osp.join(logger_dir, '%.2i' % rank))
     return env
 
 
