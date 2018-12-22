@@ -66,7 +66,7 @@ class InverseDynamics(FeatureExtractor):
             x = fc(x, units=self.policy.hidsize, activation=activ)
             x = fc(x, units=self.ac_space.n, activation=None)
             param = unflatten_first_dim(x, sh)
-            idfpd = self.policy.ac_pdtype.pdfromflat(param)
+            idfpd = self.policy.ac_pdtype.proba_distribution_from_flat(param)
             return idfpd.neglogp(self.ac)
 
 
